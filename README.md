@@ -1,4 +1,4 @@
-# DistilBERT Full Fine-Tuning (3‑Class) — Reproducible Template
+# DistilBERT Full Fine-Tuning (3‑Class) 
 
 This repository accompanies the notebook **`lab3-2.ipynb`**, which performs **full fine‑tuning and LoRA fine-tuning** of a pretrained Transformer (**`distilbert-base-uncased`**) for a **3‑class sentiment** task. It uses **PyTorch + HuggingFace Transformers**, early stopping, and macro‑F1 model selection. The code is clean, simple, and ready to reproduce on your machine.
 
@@ -13,22 +13,25 @@ This repository accompanies the notebook **`lab3-2.ipynb`**, which performs **fu
 - **Training**: Full fine‑tuning, LoRA.
 - **Outputs**: Best checkpoint and metrics saved under `runs/fpb_full_ft(or fpb_lora2)/`.
 
-
-├─ main.py                 # single entry point to reproduce results
-├─ run.sh                  # simple shell wrapper (optional)
-├─ configs/
-│  ├─ finetune_full.yaml   # full FT hyperparams
-│  └─ finetune_lora.yaml   # LoRA hyperparams
-├─ src/                    # training, data, eval modules
-├─ data/                   # local datasets
-├─ outputs/                # logs, checkpoints, metrics
-└─ requirements.txt        # Python deps
+```python
+├─ main.py                      
+├─ finphrase/
+│  ├─ __init__.py
+│  ├─ cli.py                    
+│  ├─ data.py                   
+│  ├─ tokenization.py            
+│  ├─ metrics.py                
+│  ├─ plots.py                   
+│  └─ trainers.py               
+└─ requirements.txt         
+```
 
 ---
 
 ## 2) Environment
 - OS: Linux
 - Python: **3.10.18**
+  
 pip install -r requirements.txt
 
 ---
@@ -37,7 +40,9 @@ pip install -r requirements.txt
 
 Source: https://huggingface.co/datasets/takala/financial_phrasebank
   
-This project reads a single .txt file with sentence–label pairs and builds train/validation/test splits. The loader automatically scans for a subset file in the current directory (DATA_DIR="./") using this priority:
+This project reads a single .txt file with sentence–label pairs and builds train/validation/test splits. 
+
+The loader automatically scans for a subset file in the current directory (DATA_DIR="./") using this priority:
 	1.	Sentences_AllAgree.txt
 	2.	Sentences_75Agree.txt
 	3.	Sentences_66Agree.txt
@@ -70,6 +75,7 @@ TrainingArguments(
     greater_is_better=True
 )
 ```
+
 ```python
 TrainingArguments(
     output_dir="runs/fpb_lora2",
@@ -116,13 +122,3 @@ python main.py --run both
 
 ---
 
-
-## 9) Reproducibility
-
-- **Seeds**: `seed=42` with a helper to fix global seeds.
-- **Determinism**: tokenization + preprocessing are defined in code and can be reused verbatim.
-- **Pinned libs**: you may freeze versions in `requirements.txt` for strict repeats.
-
-For stronger claims, you can run **multiple seeds** (e.g., 41/42/43) and report mean ± std of macro‑F1.
-
----
