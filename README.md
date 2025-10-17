@@ -11,35 +11,41 @@ This repository accompanies the notebook **`lab3-2.ipynb`**, which performs **fu
 - **Task**: Multi‑class text classification (3 classes).
 - **Backbone**: `distilbert-base-uncased` (a compact, distilled BERT with good speed/quality tradeoff).
 - **Frameworks**: PyTorch, HuggingFace Transformers/Datasets, Evaluate, scikit‑learn.
-- **Training**: Full fine‑tuning (update all parameters), early stopping on **macro‑F1**.
-- **Outputs**: Best checkpoint and metrics saved under `runs/fpb_full_ft/`.
+- **Training**: Full fine‑tuning, LoRA.
+- **Outputs**: Best checkpoint and metrics saved under `runs/fpb_full_ft(or fpb_lora2)/`.
+
+
+├─ main.py                 # single entry point to reproduce results
+├─ run.sh                  # simple shell wrapper (optional)
+├─ configs/
+│  ├─ finetune_full.yaml   # full FT hyperparams
+│  └─ finetune_lora.yaml   # LoRA hyperparams
+├─ src/                    # training, data, eval modules
+├─ data/                   # local datasets
+├─ outputs/                # logs, checkpoints, metrics
+└─ requirements.txt        # Python deps
 
 ---
 
 ## 2) Environment
-
-Create and activate a virtual environment, then install dependencies:
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate            # Windows: .venv\Scripts\activate
-pip install --upgrade pip
-pip install torch transformers datasets evaluate scikit-learn peft pandas matplotlib
-```
-
-> If your GPU supports half precision, the notebook already enables **FP16** during training.
+- OS: Linux
+- Python: **3.10.18**
+pip install -r requirements.txt
 
 ---
 
 ## 3) Data (simple & flexible)
 
-The notebook expects three splits: **`ds_train`**, **`ds_valid`**, **`ds_test`**.  
-They are standard HuggingFace `Dataset` objects (the notebook constructs them with `Dataset.from_...`).
+Source: https://huggingface.co/datasets/takala/financial_phrasebank
+  
+This project reads a single .txt file with sentence–label pairs and builds train/validation/test splits. The loader automatically scans for a subset file in the current directory (DATA_DIR="./") using this priority:
+	1.	Sentences_AllAgree.txt
+	2.	Sentences_75Agree.txt
+	3.	Sentences_66Agree.txt
+	4.	Sentences_50Agree.txt
 
-- **Minimum columns**: a text field and an integer **label** in `{0,1,2}` (for 3‑class).  
-- If your raw data are Python lists/CSV, you can first build a `Dataset` via `Dataset.from_dict(...)` or `load_dataset('csv', ...)` and **rename** columns to the ones used in the notebook.
+Put one of these files next to main.py (or adjust DATA_DIR). The first one found is used.
 
-> Keep raw data **out of the repo** if files are large. Prefer links or scripts to fetch data.
 
 ---
 
@@ -113,20 +119,6 @@ python lab3-2.py
 
 ---
 
-## 8) Evaluation & What to report
-
-The notebook computes validation/test **accuracy** and **macro‑F1**. In your report, include:
-
-- **Scores**: validation & test accuracy / macro‑F1.
-- **Confusion matrix** (optional): helps reveal which classes are confused.
-- A **short error analysis**: 3–5 representative mistakes and reasons (sarcasm, short context, OOV terms, etc.).
-
-If you plot learning curves (loss/F1 vs epoch), initial flat points can appear due to:
-- **LR warmup / small updates** at the start.
-- **Padding-heavy batches** early on.
-- Few evaluation points if `eval_strategy="epoch"` (metrics update once per epoch).
-
----
 
 ## 9) Reproducibility
 
@@ -137,45 +129,3 @@ If you plot learning curves (loss/F1 vs epoch), initial flat points can appear d
 For stronger claims, you can run **multiple seeds** (e.g., 41/42/43) and report mean ± std of macro‑F1.
 
 ---
-
-## 10) Small extensions (optional, easy marks)
-
-- Swap backbone to `bert-base-uncased` or `roberta-base` and compare metrics/latency.
-- Try a shorter `max_length` (like 96) for faster training; or 256 for potential gains.
-- Class imbalance remedies: class weights or focal loss.
-- Calibration check (ECE) and reliability plots.
-- Export a few misclassified examples with predicted probability to inspect patterns.
-
----
-
-## 11) Folder policy (keep repo light)
-
-- **Do not** commit large datasets or model weights.  
-- Use `.gitignore` to exclude `runs/`, `*.bin`, `*.safetensors`, `.ipynb_checkpoints/`, etc.
-
-Suggested `.gitignore` entries:
-```gitignore
-runs/
-*.bin
-*.safetensors
-.ipynb_checkpoints/
-__pycache__/
-.DS_Store
-.venv/
-```
-
----
-
-## 12) A short reflection (2–4 sentences)
-
-Full fine‑tuning of DistilBERT with a small LR (1e‑5) and early stopping provides a **stable** baseline for 3‑class sentiment. Macro‑F1 selection improves robustness against class imbalance. Most residual errors stem from ambiguous/short texts or context‑dependent sentiment (e.g., sarcasm). Future work may include larger backbones (RoBERTa), data augmentation, and class‑aware losses.
-
----
-
-### At a glance (copy‑paste checklist)
-
-- ✅ DistilBERT full FT, 3‑class, macro‑F1 early stop  
-- ✅ Tokenization @ 128, dynamic padding  
-- ✅ Best model & metrics saved to `runs/fpb_full_ft/`  
-- ✅ Reproducible seeds & clear dependencies  
-- ✅ Lightweight repo policy (no large binaries)  
